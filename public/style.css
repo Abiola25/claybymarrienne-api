@@ -1,0 +1,320 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Lato&display=swap');
+
+:root {
+  --main-color: #800000;
+  --accent: #a52a2a;
+  --bg-color: #fdf9f6;
+  --card-bg: #ffffff;
+  --border: #e6ddd8;
+  --text: #3e2d21;
+  --shadow: rgba(0, 0, 0, 0.05);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+body {
+  font-family: 'Lato', sans-serif;
+  background: var(--bg-color);
+  color: var(--text);
+  line-height: 1.7;
+  scroll-behavior: smooth;
+  background-image: url('bg-texture.jpg'); /* optional clay texture */
+  background-size: 300px;
+}
+main {
+  max-width: 960px;
+  margin: auto;
+  padding: 2rem 1.5rem;
+}
+section {
+  margin-bottom: 3rem;
+}
+
+/* HERO */
+.hero-banner {
+  background: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)),
+              url('hero-bg.jpg') center/cover no-repeat;
+  color: white;
+  text-align: center;
+  padding: 6rem 2rem;
+}
+.hero-banner h1 {
+  font-family: 'Playfair Display', serif;
+  font-size: 3rem;
+  margin-bottom: 0.5rem;
+  text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.6);
+}
+.hero-banner p {
+  font-size: 1.2rem;
+  max-width: 720px;
+  margin: auto;
+  text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.6);
+}
+
+/* NAVIGATION */
+nav {
+  position: sticky;
+  top: 0;
+  background: #fffdfb;
+  padding: 1rem 2rem;
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  z-index: 1000;
+  box-shadow: 0 2px 5px var(--shadow);
+}
+nav a {
+  text-decoration: none;
+  color: var(--main-color);
+  font-weight: bold;
+  transition: color 0.2s ease;
+}
+nav a:hover {
+  color: var(--accent);
+}
+
+/* WELCOME + MISSION + ABOUT */
+#welcome, #mission, #about {
+  max-width: 800px;
+}
+#mission {
+  background: #f4ece6;
+  padding: 2rem;
+  border-left: 6px solid var(--main-color);
+  border-radius: 6px;
+}
+
+/* CART BADGE */
+#cart-badge-container {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  background: crimson;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-weight: bold;
+  z-index: 999;
+  cursor: pointer;
+}
+
+/* COLLECTION GRID */
+#collections {
+  text-align: center;
+}
+.collection-grid {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+}
+.collection-tile {
+  background: var(--card-bg);
+  border-radius: 8px;
+  padding: 1.5rem;
+  font-weight: bold;
+  border: 2px solid var(--border);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  cursor: pointer;
+}
+.collection-tile:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
+}
+
+/* PRODUCT GRID */
+.product-filters input,
+.product-filters select {
+  padding: 0.5rem;
+  margin-right: 0.5rem;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  font-family: inherit;
+}
+#product-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+.product-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 1rem;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  text-align: center;
+}
+.product-card:hover {
+  transform: scale(1.02);
+  box-shadow: 0 4px 8px var(--shadow);
+}
+.product-card img {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+  border-radius: 6px;
+}
+.product-card h3 {
+  font-size: 1.1rem;
+  margin-top: 0.5rem;
+  font-family: 'Playfair Display', serif;
+}
+.product-card .price {
+  font-size: 1rem;
+  font-weight: bold;
+  color: var(--main-color);
+  margin: 0.5rem 0;
+}
+
+/* BUTTONS */
+button,
+.product-card button,
+.cart-item button,
+.order button {
+  background: var(--main-color);
+  color: white;
+  padding: 0.6rem 1rem;
+  font-weight: bold;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background 0.25s ease, transform 0.2s ease;
+}
+button:hover {
+  background: var(--accent);
+  transform: translateY(-2px);
+}
+button:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+/* CART + CHECKOUT + ORDERS */
+#cart-section, #checkout, #orders-section {
+  background: #fffdfc;
+  padding: 1.5rem;
+  border-radius: 6px;
+  box-shadow: 0 0 5px var(--shadow);
+  margin-top: 2rem;
+}
+.cart-item, .order {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  background: white;
+}
+
+/* DETAILS */
+details {
+  background: #fff;
+  border-radius: 6px;
+  box-shadow: 0 0 5px var(--shadow);
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+}
+details summary {
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 1.2rem;
+}
+
+/* FOOTER */
+.site-footer {
+  text-align: center;
+  padding: 2rem 1rem;
+  background: #f4f0eb;
+  font-size: 0.95rem;
+  color: #5e473a;
+  border-top: 1px solid var(--border);
+}
+.site-footer a {
+  color: var(--main-color);
+  text-decoration: none;
+  font-weight: bold;
+}
+.site-footer a:hover {
+  text-decoration: underline;
+}
+
+/* WHATSAPP BUTTON */
+a[href*="wa.me"] {
+  font-family: inherit;
+  font-size: 0.95rem;
+}
+
+/* FADE-IN EFFECT */
+.fade-up {
+  opacity: 0;
+  transform: translateY(30px);
+  animation: fadeUp 0.8s ease forwards;
+}
+@keyframes fadeUp {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* RESPONSIVE CART LAYOUT */
+@media screen and (min-width: 800px) {
+  .cart-layout {
+    display: flex;
+    gap: 2rem;
+  }
+  #product-list {
+    flex: 2;
+  }
+  #cart-section {
+    flex: 1;
+    max-width: 300px;
+  }
+}
+/* Badge Ribbon */
+.ribbon {
+  position: absolute;
+  top: 10px;
+  left: -5px;
+  background: var(--accent);
+  color: white;
+  font-size: 0.7rem;
+  padding: 4px 10px;
+  transform: rotate(-12deg);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  border-radius: 3px;
+  z-index: 10;
+}
+.product-card {
+  position: relative;
+  overflow: hidden;
+}
+
+/* Hover Zoom */
+.product-card img {
+  transition: transform 0.3s ease;
+}
+.product-card:hover img {
+  transform: scale(1.05);
+}
+
+/* Floating Button */
+.product-card button {
+  opacity: 0;
+  transform: translateY(8px);
+  transition: all 0.3s ease;
+}
+.product-card:hover button {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Stars */
+.stars {
+  color: gold;
+  font-size: 0.85rem;
+  margin: 0.4rem 0;
+}

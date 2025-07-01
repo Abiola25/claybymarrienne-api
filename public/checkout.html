@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Checkout – Claybymarienne</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .checkout-wrapper {
+      max-width: 900px;
+      margin: 2rem auto;
+      background: #fff;
+      padding: 2rem;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+
+    .checkout-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+    }
+
+    .checkout-grid h3 {
+      color: #5a3e2b;
+      margin-bottom: 1rem;
+    }
+
+    .checkout-form input, .checkout-form textarea {
+      width: 100%;
+      padding: 0.6rem;
+      margin-bottom: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 1rem;
+    }
+
+    .checkout-summary .item {
+      border-bottom: 1px solid #ddd;
+      padding: 1rem 0;
+    }
+
+    .checkout-summary .item h4 {
+      margin: 0;
+      font-weight: 500;
+      color: #5a3e2b;
+    }
+
+    .checkout-summary .item p {
+      margin: 0.3rem 0 0;
+      color: #555;
+    }
+
+    .checkout-total {
+      text-align: right;
+      font-weight: bold;
+      font-size: 1.2rem;
+      margin-top: 1rem;
+      color: #5a3e2b;
+    }
+
+    .checkout-btn {
+      background: #5a3e2b;
+      color: white;
+      padding: 0.8rem 1.5rem;
+      border: none;
+      font-size: 1rem;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-top: 1.5rem;
+    }
+
+    @media (max-width: 768px) {
+      .checkout-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navigation -->
+  <header>
+    <h2>Claybymarienne</h2>
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="cart.html">Cart</a>
+      <a href="checkout.html">Checkout</a>
+      <a href="order.html">Orders</a>
+    </nav>
+  </header>
+
+  <div class="checkout-wrapper">
+    <h2 style="color:#5a3e2b;">Checkout 🧾</h2>
+
+    <div class="checkout-grid">
+      <!-- Delivery Info -->
+      <div class="checkout-form">
+        <h3>Delivery Details</h3>
+        <input type="text" id="name" placeholder="Full Name" required />
+        <input type="email" id="email" placeholder="Email Address" required />
+        <input type="text" id="address" placeholder="Delivery Address" required />
+        <textarea id="note" rows="3" placeholder="Delivery Note (optional)"></textarea>
+        <button class="checkout-btn" onclick="submitOrder()">Submit Order</button>
+      </div>
+
+      <!-- Cart Summary -->
+      <div class="checkout-summary" id="checkout-summary">
+        <h3>Your Items</h3>
+        <!-- JS will inject items here -->
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const summary = document.getElementById('checkout-summary');
+    const cart = JSON.parse(localStorage.getItem('cart')) || {};
+    let total = 0;
+
+    if (Object.keys(cart).length === 0) {
+      summary.innerHTML += '<p style="color:#777;">Your cart is empty.</p>';
+    } else {
+      Object.entries(cart).forEach(([name, item]) => {
+        const price = parseFloat(item.price.replace(/[₦,]/g, ''));
+        const subtotal = price * item.quantity;
+        total += subtotal;
+
+        const div = document.createElement('div');
+        div.className = 'item';
+        div.innerHTML = `
+          <h4>${name}</h4>
+          <p>₦${price.toLocaleString()} × ${item.quantity} = ₦${subtotal.toLocaleString()}</p>
+        `;
+        summary.appendChild(div);
+      });
+
+      const totalEl = document.createElement('p');
+      totalEl.className = 'checkout-total';
+      totalEl.textContent = `Total: ₦${total.toLocaleString()}`;
+      summary.appendChild(totalEl);
+    }
+
+    function submitOrder() {
+      const name = document.getElementById('name').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const address = document.getElementById('address').value.trim();
+      const note = document.getElementById('note').value.trim();
+
+      if (!name || !email || !address) {
+        alert('Please fill in all required fields.');
+        return;
+      }
+
+      const order = {
+        customer: { name, email, address, note },
+        cart,
+        total
+      };
+
+      // Placeholder for API POST request
+      console.log('Submitting Order:', order);
+
+      localStorage.removeItem('cart');
+      window.location.href = 'order.html';
+    }
+  </script>
+</body>
+</html>

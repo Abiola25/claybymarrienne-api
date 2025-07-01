@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Order Successful – ClayByMarrienne</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+</head>
+<body>
+  <h1>Order Successful 🎉</h1>
+  <p>Thank you, <span id="customer-name">Customer</span>!</p>
+  <p>Total Paid: ₦<span id="final-total">0</span></p>
+  <a href="index.html">Back to Home</a>
+
+  <script>
+    const orders = JSON.parse(localStorage.getItem('orders') || '[]');
+    const lastOrder = orders[orders.length - 1] || {};
+    const name = lastOrder.name || 'Customer';
+    const total = lastOrder.total || 0;
+
+    document.getElementById('customer-name').textContent = name;
+    document.getElementById('final-total').textContent = parseInt(total).toLocaleString();
+
+    localStorage.removeItem('cart');
+    localStorage.removeItem('final_total');
+  </script>
+</body>
+</html>

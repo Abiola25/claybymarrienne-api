@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Your Cart – ClayByMarrienne</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .cart-container {
+      max-width: 800px;
+      margin: 2rem auto;
+      background: #fff;
+      padding: 2rem;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+    .cart-container h2 {
+      color: #5a3e2b;
+      margin-bottom: 1.5rem;
+    }
+    .cart-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid #ddd;
+      padding: 1rem 0;
+    }
+    .cart-item img {
+      width: 80px;
+      border-radius: 4px;
+      margin-right: 1rem;
+    }
+    .cart-details {
+      flex: 1;
+      display: flex;
+      align-items: center;
+    }
+    .cart-info {
+      flex: 1;
+    }
+    .cart-info h3 {
+      margin: 0;
+      color: #5a3e2b;
+    }
+    .cart-controls {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .cart-controls button {
+      background: #5a3e2b;
+      color: #fff;
+      border: none;
+      padding: 0.3rem 0.7rem;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .cart-controls button:hover {
+      background: #7a543a;
+    }
+    .total {
+      text-align: right;
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: #5a3e2b;
+      margin-top: 1.5rem;
+    }
+    .checkout-btn {
+      display: block;
+      width: fit-content;
+      background: #5a3e2b;
+      color: #fff;
+      padding: 0.8rem 1.5rem;
+      margin: 2rem auto 0;
+      text-align: center;
+      border-radius: 6px;
+      text-decoration: none;
+      font-weight: bold;
+    }
+    .checkout-btn:hover {
+      background: #7a543a;
+    }
+    .empty-msg {
+      text-align: center;
+      color: #777;
+      margin-top: 4rem;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Sticky Header -->
+  <header>
+    <h2>ClayByMarrienne</h2>
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="cart.html">Cart</a>
+      <a href="checkout.html">Checkout</a>
+      <a href="order.html">Orders</a>
+    </nav>
+  </header>
+
+  <div class="cart-container">
+    <h2>Your Cart 🛒</h2>
+    <div id="cart-items"></div>
+    <p class="total" id="grand-total">Total: ₦0</p>
+    <a id="checkout-btn" href="checkout.html" class="checkout-btn" style="display:none;">Proceed to Checkout</a>
+    <p class="empty-msg" id="empty-msg" style="display:none;">Your cart is empty.</p>
+  </div>
+
+  <script>
+    const cart = JSON.parse(localStorage.getItem('cart')) || {};
+    const cartItemsDiv = document.getElementById('cart-items');
+    const totalDisplay = document.getElementById('grand-total');
+    const emptyMsg = document.getElementById('empty-msg');
+    const checkoutBtn = document.getElementById('checkout-btn');
+
+    function renderCart() {
+      cartItemsDiv.innerHTML = '';
+      let grandTotal = 0;
+      const names = Object.keys(cart);
+      
+      if (names.length === 0) {
+        emptyMsg.style.display = 'block';
+        checkoutBtn.style.display = 'none';
+        totalDisplay.style.display = 'none';
+        return;
+      }
+
+      names.forEach(name => {
+        const item = cart[name];
+        const price = parseFloat(item.price.replace(/[₦,]/g, ''));
+        const subtotal = price * item.quantity;
+        grandTotal += subtotal;
+
+        const div = document.createElement('div');
+        div.className = 'cart-item';
+        div.innerHTML = `
+          <div class="cart-details">
+            <img src="${item.image}" alt="${name}" />
+            <div class="cart-info">
+              <h3>${name}</h3>
+              <p>₦${price.toLocaleString()} × ${item.quantity} = ₦${subtotal.toLocaleString()}</p>
+            </div>
+          </div>
+          <div class="cart-controls">
+            <button onclick="updateQty('${name}', 1)">＋</button>
+            <button onclick="updateQty('${name}', -1)">－</button>
+            <button onclick="removeItem('${name}')">🗑️</button>
+          </div>
+        `;
+        cartItemsDiv.appendChild(div);
+      });
+
+      totalDisplay.textContent = `Total: ₦${grandTotal.toLocaleString()}`;
+      totalDisplay.style.display = 'block';
+      checkoutBtn.style.display = 'inline-block';
+    }
+
+    function updateQty(name, change) {
+      if (!cart[name]) return;
+      cart[name].quantity += change;
+      if (cart[name].quantity <= 0) {
+        delete cart[name];
+      }
+      localStorage.setItem('cart', JSON.stringify(cart));
+      renderCart();
+    }
+
+    function removeItem(name) {
+      delete cart[name];
+      localStorage.setItem('cart', JSON.stringify(cart));
+      renderCart();
+    }
+
+    renderCart();
+  </script>
+</body>
+</html>
