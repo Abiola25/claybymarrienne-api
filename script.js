@@ -24,8 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ========== PRODUCTS ==========
   if (productList) {
-    fetch('http://localhost:5005/api/products')
-      .then(res => res.json())
+    fetch("https://claybymarrienne-api.onrender.com/products")
       .then(products => {
         fullProductList = products;
         displayProducts(products);
