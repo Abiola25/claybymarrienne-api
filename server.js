@@ -1,11 +1,10 @@
 const express = require("express");
 const dotenv = require("dotenv");
+const mongoose = require("mongoose");
 const cors = require("cors");
 const path = require("path");
 
 dotenv.config();
-
-const connectDB = require("./connectionstate");
 
 const Product = require("./models/product");
 const Order = require("./models/order");
@@ -20,7 +19,7 @@ app.use(express.json());
 app.use("/api/products", productRoutes);
 app.use("/api/orders", orderRoutes);
 
-// ─── Stats Route ─────────────────────────────
+// ─── Stats Endpoint ──────────────────────────
 app.get("/api/stats", async (req, res) => {
   try {
     const orders = await Order.find();
@@ -41,20 +40,27 @@ app.get("/api/stats", async (req, res) => {
 // ─── Serve Frontend ───────────────────────────
 app.use(express.static(path.join(__dirname, "public")));
 
-app.get("*", (req, res) =>
-  res.sendFile(path.join(__dirname, "public", "index.html"))
-);
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
+});
 
-// ─── Root Ping ────────────────────────────────
+// ─── Root Check ──────────────────────────────
 app.get("/", (req, res) => {
   res.send("ClayByMarienne API is live!");
 });
 
-// ─── Server & DB Init ─────────────────────────
+// ─── MongoDB Connection & Server Start ───────
 const PORT = process.env.PORT || 5005;
 
-connectDB().then(() => {
-  app.listen(PORT, () => {
-    console.log(`🚀 Server running on port ${PORT}`);
+mongoose
+  .connect(process.env.MONGO_URI)
+  .then(() => {
+    console.log("✅ MongoDB connected");
+    app.listen(PORT, () => {
+      console.log(`🚀 Server running on port ${PORT}`);
+    });
+  })
+  .catch((err) => {
+    console.error("❌ MongoDB connection error:", err.message);
+    process.exit(1);
   });
-});
