@@ -1,309 +1,302 @@
-document.addEventListener('DOMContentLoaded', () => {
-  let fullProductList = [];
-  let cart = [];
-  let allOrders = [];
+let products = [];
+let cart = [];
+let wishlist = [];
+let confirmedOrders = [];
+let receiptNo = "CBM" + Math.floor(Math.random() * 900000 + 100000);
 
-  // UI Elements
-  const productList = document.getElementById('product-list');
-  const typeFilter = document.getElementById('typeFilter');
-  const sortBy = document.getElementById('sortBy');
-  const searchBar = document.getElementById('search-bar');
-  const totalPriceEl = document.getElementById('total-price');
-  const cartContainer = document.getElementById('cart-container');
-  const cartTotal = document.getElementById('cart-total');
-  const cartBadge = document.getElementById('cart-count');
-  const cartBadgeContainer = document.getElementById('cart-badge-container');
-
-  const statusFilter = document.getElementById('statusFilter');
-  const searchInput = document.getElementById('searchInput');
-  const ordersContainer = document.getElementById('orders-container');
-  const orderSummary = document.getElementById('orderSummary');
-
-  const checkoutForm = document.getElementById('checkout-form');
-  const checkoutMessage = document.getElementById('checkout-message');
-
-  // ========== PRODUCTS ==========
-  if (productList) {
-    fetch("https://claybymarrienne-api.onrender.com/products")
-      .then(products => {
-        fullProductList = products;
-        displayProducts(products);
-        updateTotal(products);
-        setupProductFilters();
-      });
-
-    function displayProducts(productArray) {
-  productList.innerHTML = '';
-  productArray.forEach(product => {
-    const isNew = product.isNew || false; // toggle flag on product data
-    const card = document.createElement('div');
-    card.className = 'product-card';
-
-    card.innerHTML = `
-      ${isNew ? '<div class="ribbon">New</div>' : ''}
-      <img src="${product.image}" alt="${product.name}" />
-      <div class="product-info">
-        <h3>${product.name}</h3>
-        <div class="stars">★★★★☆</div>
-        <p class="price">₦${Number(product.price).toLocaleString()}</p>
-        <p style="font-size: 0.85rem; color: #777;">${product.description || ''}</p>
-        <button class="cart-btn"${product.stock === 0 ? ' disabled' : ''}>
-          ${product.stock === 0 ? 'Sold Out' : 'Add to Cart 🛒'}
-        </button>
-      </div>
-    `;
-
-    productList.appendChild(card);
-const productForm = document.getElementById('new-product-form');
-if (productForm) {
-  productForm.addEventListener('submit', async e => {
-    e.preventDefault();
-    const formData = new FormData(productForm);
-    const data = Object.fromEntries(formData);
-    data.price = parseFloat(data.price);
-    data.stock = parseInt(data.stock);
-    data.isNew = formData.get('isNew') === 'on';
-
-    try {
-      const res = await fetch('http://localhost:5005/api/products', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-      });
-      if (res.ok) {
-        productForm.reset();
-        document.getElementById('form-message').textContent = '✅ Product added!';
-      } else {
-        document.getElementById('form-message').textContent = '❌ Failed to add.';
+// 🛍️ Fetch and Render Products
+document.addEventListener("DOMContentLoaded", () => {
+  fetch("/api/products")
+    .then(res => res.json())
+    .then(data => {
+      products = data;
+      renderProducts(products);
+      insertSpotlight(products);
+    });
+fetch("/some-endpoint")
+  .then(res => {
+    if (!res.ok || res.headers.get("content-type")?.includes("text/html")) {
+      throw new Error("Invalid JSON response");
+    }
+    return res.json();
+  })
+  .then(data => { /* ... */ })
+  .catch(err => console.error("Fetch error:", err));
+  const faders = document.querySelectorAll(".fade-in");
+  const appear = new IntersectionObserver((entries, observer) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add("visible");
+        observer.unobserve(entry.target);
       }
-    } catch (err) {
-      console.error(err);
-      document.getElementById('form-message').textContent = '❌ Server error.';
+    });
+  }, { threshold: 0.2 });
+  faders.forEach(f => appear.observe(f));
+
+  setInterval(() => {
+    const track = document.querySelector(".carousel-track");
+    if (track) {
+      track.scrollBy({ left: 240, behavior: "smooth" });
+    }
+  }, 4000);
+});
+function renderProducts(items) {
+  const shop = document.getElementById("shop-products");
+  const featured = document.querySelector(".carousel-track");
+  shop.innerHTML = "";
+  featured.innerHTML = "";
+
+  items.forEach((product, index) => {
+    const div = document.createElement("div");
+    div.className = "product-card";
+    div.style.setProperty("--fade-delay", `${index * 0.1}s`);
+
+    div.innerHTML = `
+      <div class="wishlist-icon" onclick="toggleWishlist('${product._id}')">
+        ${wishlist.includes(product._id) ? "💖" : "🤍"}
+      </div>
+      ${product.new ? `<span class="new-tag">New</span>` : ""}
+      <img src="${product.image}" onclick="openModal('${product._id}')" />
+      <h3>${product.name}</h3>
+      <small class="product-description">${product.description}</small>
+      <span class="product-type">${product.type}</span>
+      <span class="stock-badge">${product.stock > 0 ? product.stock + " in stock" : "Out of stock"}</span>
+      <p class="product-price">₦${product.price.toLocaleString()}</p>
+      <button onclick="addToCart('${product._id}')" class="add-cart">Add to Cart</button>
+    `;
+    shop.appendChild(div);
+
+    if (product.featured) {
+      const featuredItem = document.createElement("div");
+      featuredItem.className = "carousel-item";
+      featuredItem.innerHTML = `
+        <img src="${product.image}" />
+        <h4>${product.name}</h4>
+        <p class="product-price">₦${product.price.toLocaleString()}</p>
+      `;
+      featured.appendChild(featuredItem);
     }
   });
 }
-    const button = card.querySelector('.cart-btn');
-    if (button) {
-      button.addEventListener('click', () => {
-        cart.push(product);
-        updateCartDisplay();
-      });
-    }
-  });
-    }
 
-    function updateTotal(products) {
-      const total = products.reduce((sum, p) => {
-        const price = Number(p.price);
-        return sum + (!isNaN(price) ? price : 0);
-      }, 0);
-      if (totalPriceEl) totalPriceEl.textContent = `Total: ₦${total.toLocaleString()}`;
-    }
-
-    function setupProductFilters() {
-      if (typeFilter) typeFilter.addEventListener('change', applyProductFilters);
-      if (sortBy) sortBy.addEventListener('change', applyProductFilters);
-      if (searchBar) {
-        searchBar.addEventListener('input', () => {
-          const term = searchBar.value.toLowerCase();
-          document.querySelectorAll('.product-card').forEach(card => {
-            const name = card.querySelector('h3').textContent.toLowerCase();
-            const desc = card.querySelector('p:nth-of-type(2)').textContent.toLowerCase();
-            card.style.display = name.includes(term) || desc.includes(term) ? 'block' : 'none';
-          });
-        });
-      }
-    }
-
-    function applyProductFilters() {
-      let filtered = [...fullProductList];
-      const selectedType = typeFilter?.value;
-      const sortOption = sortBy?.value;
-
-      if (selectedType && selectedType !== 'all') {
-        filtered = filtered.filter(p => (p.type || '').toLowerCase() === selectedType.toLowerCase());
-      }
-
-      if (sortOption === 'low') {
-        filtered.sort((a, b) => a.price - b.price);
-      } else if (sortOption === 'high') {
-        filtered.sort((a, b) => b.price - a.price);
-      }
-
-      displayProducts(filtered);
-      updateTotal(filtered);
-    }
+function toggleWishlist(id) {
+  if (wishlist.includes(id)) {
+    wishlist = wishlist.filter(w => w !== id);
+  } else {
+    wishlist.push(id);
   }
+  renderProducts(products);
+}
+function handleSearch() {
+  const term = document.getElementById("searchInput").value.toLowerCase();
+  const filtered = products.filter(p =>
+    p.name.toLowerCase().includes(term) || p.type.toLowerCase().includes(term)
+  );
+  renderProducts(filtered);
+}
 
-  // ========== CATEGORY FILTER (TILE CLICK) ==========
-  window.filterCategory = function(category) {
-    if (typeFilter) {
-      typeFilter.value = category;
-      typeFilter.dispatchEvent(new Event('change'));
-    }
-    const productListSection = document.getElementById('product-list');
-    if (productListSection) {
-      window.scrollTo({ top: productListSection.offsetTop - 80, behavior: 'smooth' });
-    }
-  };
+function handleSort(order) {
+  let sorted = [...products];
+  if (order === "low") sorted.sort((a, b) => a.price - b.price);
+  if (order === "high") sorted.sort((a, b) => b.price - a.price);
+  if (order === "new") sorted = sorted.filter(p => p.new);
+  renderProducts(sorted);
+}
 
-  // ========== CART ==========
-  function updateCartDisplay() {
-    if (!cartContainer || !cartTotal) return;
-
-    if (cart.length === 0) {
-      cartContainer.innerHTML = '<p>No items yet.</p>';
-      cartTotal.textContent = 'Total: ₦0';
-    } else {
-      cartContainer.innerHTML = '';
-      let total = 0;
-
-      cart.forEach((item, index) => {
-        const div = document.createElement('div');
-        div.className = 'cart-item';
-        const price = Number(item.price) || 0;
-        total += price;
-
-        div.innerHTML = `
-          ${item.name} — ₦${price.toLocaleString()}
-          <button onclick="removeFromCart(${index})">Remove</button>
-        `;
-        cartContainer.appendChild(div);
-      });
-
-      cartTotal.textContent = `Total: ₦${total.toLocaleString()}`;
-    }
-
-    if (cartBadge) cartBadge.textContent = cart.length;
+function filterProducts(type) {
+  if (type === "All") {
+    renderProducts(products);
+    return;
   }
+  const filtered = products.filter(p =>
+    p.type === type || (type === "New" && p.new === true)
+  );
+  renderProducts(filtered);
+}
+function openModal(id) {
+  const product = products.find(p => p._id === id);
+  if (!product) return;
 
-  window.removeFromCart = function (index) {
-    cart.splice(index, 1);
-    updateCartDisplay();
-  };
+  document.getElementById("modal-image").src = product.image;
+  document.getElementById("modal-name").textContent = product.name;
+  document.getElementById("modal-desc").textContent = product.description;
 
-  if (cartBadgeContainer) {
-    cartBadgeContainer.addEventListener('click', () => {
-      const cartSection = document.getElementById('cart-section');
-      if (cartSection) {
-        cartSection.scrollIntoView({ behavior: 'smooth' });
-      }
-    });
-  }
+  const addBtn = document.getElementById("modal-add");
+  addBtn.onclick = () => addToCart(id);
 
-  // ========== CHECKOUT ==========
-  if (checkoutForm) {
-    checkoutForm.addEventListener('submit', e => {
-      e.preventDefault();
-      if (cart.length === 0) {
-        checkoutMessage.textContent = '🛑 Your cart is empty.';
-        return;
-      }
+  document.getElementById("product-modal").style.display = "flex";
+}
 
-      const name = document.getElementById('customerName').value.trim();
-      const phone = document.getElementById('customerPhone').value.trim();
-      const itemSummary = cart.map(p => `${p.name} x1`).join(', ');
+document.getElementById("modal-close").onclick = () => {
+  document.getElementById("product-modal").style.display = "none";
+};
 
-      const payload = {
-        name,
-        phone,
-        item: itemSummary,
-        quantity: cart.length,
-        createdAt: new Date().toISOString(),
-        status: 'Pending'
-      };
-
-      fetch('http://localhost:5005/api/orders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      })
-        .then(res => {
-          if (!res.ok) throw new Error('Failed to submit order');
-          return res.json();
-        })
-        .then(() => {
-          checkoutMessage.textContent = '✅ Order placed successfully!';
-          cart = [];
-          updateCartDisplay();
-          checkoutForm.reset();
-        })
-        .catch(() => {
-          checkoutMessage.textContent = '❌ Failed to place order. Please try again.';
-        });
-    });
-  }
-
-  // ========== ORDERS ==========
-  if (ordersContainer && orderSummary) {
-    fetch('http://localhost:5005/api/orders')
-      .then(res => res.json())
-      .then(data => {
-        allOrders = data;
-        renderOrders(data);
-        setupOrderFilters();
-      });
-
-    function renderOrders(data) {
-      const counts = { Pending: 0, Shipped: 0, Delivered: 0 };
-      data.forEach(o => {
-        if (counts[o.status] !== undefined) counts[o.status]++;
-      });
-
-      orderSummary.textContent = `Pending: ${counts.Pending} | Shipped: ${counts.Shipped} | Delivered: ${counts.Delivered}`;
-      ordersContainer.innerHTML = data.length === 0
-        ? '<p>No orders found.</p>'
-        : data.map(order => `
-          <div class="order">
-            <strong>${order.name}</strong> ordered <em>${order.item}</em> × ${order.quantity}<br/>
-            <small>${new Date(order.createdAt).toLocaleString()}</small><br/>
-            <select onchange="updateStatus('${order._id}', this.value)">
-              ${['Pending', 'Shipped', 'Delivered'].map(
-                status => `<option value="${status}" ${order.status === status ? 'selected' : ''}>${status}</option>`
-              ).join('')}
-            </select><br/>
-            <button onclick="deleteOrder('${order._id}')">Delete</button>
-          </div>
-        `).join('');
-    }
-    }
-
-    function setupOrderFilters() {
-      if (statusFilter) statusFilter.addEventListener('change', applyOrderFilters);
-      if (searchInput) searchInput.addEventListener('input', applyOrderFilters);
-    }
-
-    function applyOrderFilters() {
-      const term = searchInput?.value.toLowerCase() || '';
-      const status = statusFilter?.value || '';
-      const filtered = allOrders.filter(order => {
-        const matchText = `${order.name} ${order.item}`.toLowerCase();
-        const statusMatch = !status || order.status === status;
-        return matchText.includes(term) && statusMatch;
-      });
-      renderOrders(filtered);
-    // Update Order Status
-    window.updateStatus = function (id, newStatus) {
-      fetch(`http://localhost:5005/api/orders/${id}/status`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: newStatus })
-      })
-        .then(() => console.log('✅ Status updated'))
-        .catch(() => alert('Failed to update order status.'));
-    };
-
-    // Delete Order
-    window.deleteOrder = function (id) {
-      if (!confirm('Are you sure you want to delete this order?')) return;
-      fetch(`http://localhost:5005/api/orders/${id}`, {
-        method: 'DELETE'
-      })
-        .then(() => {
-          allOrders = allOrders.filter(order => order._id !== id);
-          renderOrders(allOrders);
-        })
-        .catch(() => alert('Failed to delete order.'));
-    };
+document.getElementById("product-modal").addEventListener("click", (e) => {
+  if (e.target.id === "product-modal") {
+    document.getElementById("product-modal").style.display = "none";
   }
 });
+function addToCart(id) {
+  const item = products.find(p => p._id === id);
+  if (!item || item.stock <= 0) {
+    return alert("Item out of stock!");
+  }
+
+  cart.push({ ...item });
+  updateCartDisplay();
+
+  // 💬 Pulse Activity Feed
+  const feed = document.getElementById("activity-feed");
+  feed.textContent = `${item.name} added to cart by visitor`;
+  setTimeout(() => {
+    feed.textContent = "Someone is browsing... 🛍️";
+  }, 4000);
+
+  // ✨ Button Pop Animation
+  const buttons = document.querySelectorAll(".add-cart");
+  buttons.forEach(btn => {
+    if (btn.getAttribute("onclick") === `addToCart('${id}')`) {
+      btn.classList.add("pop");
+      setTimeout(() => btn.classList.remove("pop"), 300);
+    }
+  });
+}
+function updateCartDisplay() {
+  const cartZone = document.getElementById("cart-items");
+  const total = document.getElementById("cart-total");
+  const badge = document.getElementById("cart-badge"); // Optional if using a badge somewhere
+  cartZone.innerHTML = "";
+
+  let sum = 0;
+  cart.forEach((item, index) => {
+    sum += item.price;
+    const entry = document.createElement("div");
+    entry.className = "cart-entry";
+    entry.innerHTML = `
+      ${item.name} – ₦${item.price.toLocaleString()}
+      <button onclick="removeCartItem(${index})">Remove</button>
+    `;
+    cartZone.appendChild(entry);
+  });
+
+  total.textContent = sum.toLocaleString();
+  if (badge) badge.textContent = cart.length;
+}
+
+function removeCartItem(index) {
+  cart.splice(index, 1);
+  updateCartDisplay();
+}
+function checkout() {
+  const panel = document.getElementById("checkout-panel");
+  panel.classList.add("show");
+  panel.scrollIntoView({ behavior: "smooth" });
+}
+function submitOrder() {
+  const name = document.getElementById("cust-name").value.trim();
+  const phone = document.getElementById("cust-phone").value.trim();
+  const code = document.getElementById("cust-code").value.trim();
+
+  if (!name || !phone || cart.length === 0) {
+    return alert("Please enter your name, phone number, and add items to cart.");
+  }
+
+  document.getElementById("confirmation-message").textContent = `Thank you, ${name}! Your order has been confirmed.`;
+  document.getElementById("inv-name").textContent = name;
+  document.getElementById("inv-phone").textContent = phone;
+  document.getElementById("inv-date").textContent = new Date().toLocaleDateString();
+  document.getElementById("inv-number").textContent = receiptNo;
+
+  const invItems = document.getElementById("inv-items");
+  invItems.innerHTML = "";
+  let total = 0;
+
+  cart.forEach(item => {
+    const li = document.createElement("li");
+    li.textContent = `${item.name} x1 – ₦${item.price.toLocaleString()}`;
+    invItems.appendChild(li);
+    total += item.price;
+  });
+
+  document.getElementById("inv-total").textContent = total.toLocaleString();
+  document.getElementById("order-confirmation").style.display = "block";
+  document.getElementById("order-confirmation").scrollIntoView({ behavior: "smooth" });
+
+  confirmedOrders.push({ name, phone, items: [...cart], total });
+  renderAdminPanel();
+  cart = [];
+  updateCartDisplay();
+}
+function downloadPDF() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+
+  const name = document.getElementById("inv-name").textContent;
+  const phone = document.getElementById("inv-phone").textContent;
+  const date = document.getElementById("inv-date").textContent;
+  const receipt = document.getElementById("inv-number").textContent;
+  const items = [...document.querySelectorAll("#inv-items li")].map(li => li.textContent);
+  const total = document.getElementById("inv-total").textContent;
+
+  doc.setFontSize(16);
+  doc.text("ClayByMarienne – Order Receipt", 20, 20);
+  doc.setFontSize(12);
+  doc.text(`Receipt No: ${receipt}`, 20, 30);
+  doc.text(`Name: ${name}`, 20, 38);
+  doc.text(`Phone: ${phone}`, 20, 46);
+  doc.text(`Date: ${date}`, 20, 54);
+  doc.text("Items:", 20, 64);
+
+  items.forEach((item, index) => {
+    doc.text(`• ${item}`, 25, 72 + index * 8);
+  });
+
+  doc.text(`Total: ₦${total}`, 20, 80 + items.length * 8);
+  doc.save(`${receipt}.pdf`);
+}
+function printReceipt() {
+  const original = document.body.innerHTML;
+  const receipt = document.getElementById("order-confirmation").innerHTML;
+  document.body.innerHTML = `<div class="print-receipt">${receipt}</div>`;
+  window.print();
+  document.body.innerHTML = original;
+  location.reload();
+}
+
+function closeConfirmation() {
+  document.getElementById("order-confirmation").style.display = "none";
+  document.getElementById("shop").scrollIntoView({ behavior: "smooth" });
+}
+function renderAdminPanel() {
+  const adminZone = document.getElementById("admin-orders");
+  adminZone.innerHTML = "";
+
+  if (confirmedOrders.length === 0) {
+    adminZone.innerHTML = "<p>No orders confirmed yet.</p>";
+    return;
+  }
+
+  confirmedOrders.forEach((order, index) => {
+    const entry = document.createElement("div");
+    entry.innerHTML = `
+      <strong>Order ${index + 1}</strong><br>
+      Name: ${order.name} <br>
+      Phone: ${order.phone} <br>
+      Items: ${order.items.map(i => i.name).join(", ")}<br>
+      Total: ₦${order.total.toLocaleString()}<hr>
+    `;
+    adminZone.appendChild(entry);
+  });
+}
+
+function downloadAllOrders() {
+  const blob = new Blob([JSON.stringify(confirmedOrders, null, 2)], {
+    type: "application/json"
+  });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = "ClayByMarienne_Orders.json";
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}

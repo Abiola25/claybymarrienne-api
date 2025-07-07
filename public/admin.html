@@ -2,74 +2,220 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Admin – Orders</title>
-  <style>
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      background: #fdfaf6;
-      padding: 2rem;
-    }
-    h1 {
-      color: #5a3e2b;
-    }
-    .order {
-      background: white;
-      border: 1px solid #ccc;
-      padding: 1rem;
-      margin-bottom: 1.5rem;
-    }
-    .order h3 {
-      margin-top: 0;
-    }
-    .item {
-      margin-left: 1rem;
-    }
-    .total {
-      font-weight: bold;
-      margin-top: 1rem;
-      color: #333;
-    }
-  </style>
+  <title>ClayByMarienne Admin</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="ClayByMarienne - Handcrafted claywares rooted in African heritage and healing." />
+  <meta name="keywords" content="clay, handmade, Nigeria pottery, detox bowl, clay cookware, clay bottle" />
+  <meta name="author" content="ClayByMarienne" />
+  <link rel="icon" href="assets/favicon.png" type="image/png" />
+  <link href="https://fonts.googleapis.com/css2?family=Lato&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
 </head>
+<!-- Developer Credits -->
+<footer class="site-footer">
+  Crafted by <strong>Moshood Abiola</strong> — Web Developer & Clay Enthusiast<br/>
+  <a href="https://wa.me/2348139021249">Chat with me</a>
+  <a href="mailto:abiolamoshood11@gmail.com">Contact me</a>
+</footer>
 <body>
-  <h1>ClayByMarrienne – Orders Dashboard</h1>
-  <div id="orders"></div>
+
+  <h1>ClayByMarienne Admin Dashboard</h1>
+
+  <!-- 📊 Stats -->
+  <section>
+    <h2>📊 Dashboard Stats</h2>
+    <div id="stats-panel">
+      <p><strong>Total Products:</strong> <span id="stat-products">0</span></p>
+      <p><strong>Total Orders:</strong> <span id="stat-orders">0</span></p>
+      <p><strong>Total Revenue:</strong> ₦<span id="stat-revenue">0</span></p>
+    </div>
+  </section>
+
+  <!-- ➕ Add Product -->
+  <section>
+    <h2>➕ Add Product</h2>
+    <form id="quick-add-form" style="margin-bottom: 2rem;">
+      <input type="text" id="new-name" placeholder="Product Name" required />
+      <input type="text" id="new-type" placeholder="Type (e.g. Mug)" required />
+      <input type="number" id="new-price" placeholder="Price (₦)" required />
+      <input type="text" id="new-image" placeholder="Image URL" required />
+      <input type="number" id="new-stock" placeholder="Stock Qty" required />
+      <label><input type="checkbox" id="new-flag" /> Mark as New Arrival</label><br/><br/>
+      <button type="submit">Add Product</button>
+    </form>
+  </section>
+
+  <!-- 🛍️ Products -->
+  <section>
+    <h2>🛍️ Products</h2>
+    <div id="admin-products"></div>
+  </section>
+
+  <!-- 📦 Orders -->
+  <section>
+    <h2>📦 Orders</h2>
+    <div id="admin-orders"></div>
+  </section>
 
   <script>
-    fetch('/api/orders')
-      .then(res => res.json())
-      .then(orders => {
-        const container = document.getElementById('orders');
-        if (orders.length === 0) {
-          container.innerHTML = '<p>No orders yet.</p>';
-          return;
-        }
+    // Toast Message
+    function showToast(message) {
+      const toast = document.createElement("div");
+      toast.className = "toast";
+      toast.textContent = message;
+      document.body.appendChild(toast);
+      setTimeout(() => toast.remove(), 2000);
+    }
 
-        orders.forEach(order => {
-          const total = order.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    // Load stats
+    async function loadStats() {
+      try {
+        const res = await fetch("http://localhost:5005/stats");
+        const stats = await res.json();
+        document.getElementById("stat-products").textContent = stats.products;
+        document.getElementById("stat-orders").textContent = stats.orders;
+        document.getElementById("stat-revenue").textContent = stats.revenue.toLocaleString();
+      } catch (err) {
+        console.error("❌ Stats error:", err);
+        document.getElementById("stats-panel").innerHTML = "<p>Error loading stats.</p>";
+      }
+    }
 
-          const div = document.createElement('div');
-          div.className = 'order';
-          div.innerHTML = `
-            <h3>🧾 Order ID: ${order._id}</h3>
-            <p><strong>Name:</strong> ${order.name}</p>
-            <p><strong>Email:</strong> ${order.email}</p>
-            <p><strong>Address:</strong> ${order.address}</p>
-            <p><strong>Placed:</strong> ${new Date(order.createdAt).toLocaleString()}</p>
-            <h4>Items:</h4>
-            <ul>
-              ${order.items.map(item => `
-                <li class="item">
-                  ${item.name} – ₦${item.price} × ${item.quantity}
-                </li>
-              `).join('')}
-            </ul>
-            <p class="total">Total: ₦${total.toLocaleString()}</p>
-          `;
-          container.appendChild(div);
-        });
+    // Load products
+    async function loadProducts() {
+      const res = await fetch("http://localhost:5005/products");
+      const products = await res.json();
+      const container = document.getElementById("admin-products");
+      container.innerHTML = products.map(p => `
+  <div class="product-tile">
+    <img src="${p.image}" alt="${p.name}" loading="lazy" />
+    <div class="tile-content">
+      <strong>${p.name}</strong> (${p.type})<br/>
+      ₦${p.price.toLocaleString()}<br/>
+      Stock: ${p.stock}<br/>
+      ${p.newItem ? "<span class='new-badge'>🆕 New Arrival</span>" : ""}
+      <div id="edit-form-${p._id}" style="display:none; margin-top:1rem;">
+        <input type="text" id="name-${p._id}" value="${p.name}" />
+        <input type="text" id="type-${p._id}" value="${p.type}" />
+        <input type="number" id="price-${p._id}" value="${p.price}" />
+        <input type="number" id="stock-${p._id}" value="${p.stock}" />
+        <textarea id="desc-${p._id}" rows="2">${p.description || ""}</textarea>
+        <button onclick="saveProduct('${p._id}')">Save</button>
+      </div>
+      <div class="tile-actions">
+        <button onclick="toggleEdit('${p._id}')">Edit</button>
+        <button onclick="deleteProduct('${p._id}')">Delete</button>
+      </div>
+    </div>
+  </div>
+`).join("");
+    }
+
+    function toggleEdit(id) {
+      const form = document.getElementById(`edit-form-${id}`);
+      form.style.display = form.style.display === "none" ? "block" : "none";
+    }
+
+    async function saveProduct(id) {
+      const updated = {
+        name: document.getElementById(`name-${id}`).value,
+        type: document.getElementById(`type-${id}`).value,
+        price: parseFloat(document.getElementById(`price-${id}`).value),
+        stock: parseInt(document.getElementById(`stock-${id}`).value),
+        description: document.getElementById(`desc-${id}`).value
+      };
+      await fetch(`http://localhost:5005/products/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updated)
       });
+      showToast("✅ Product updated!");
+      loadProducts();
+      loadStats();
+    }
+
+    async function deleteProduct(id) {
+      if (!confirm("Delete this product?")) return;
+      await fetch(`http://localhost:5005/products/${id}`, { method: "DELETE" });
+      showToast("🗑️ Product deleted");
+      loadProducts();
+      loadStats();
+    }
+
+    document.getElementById("quick-add-form")?.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const product = {
+        name: document.getElementById("new-name").value.trim(),
+        type: document.getElementById("new-type").value.trim(),
+        price: parseFloat(document.getElementById("new-price").value),
+        image: document.getElementById("new-image").value.trim(),
+        stock: parseInt(document.getElementById("new-stock").value),
+        newItem: document.getElementById("new-flag").checked
+      };
+
+      try {
+        const res = await fetch("http://localhost:5005/products", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(product)
+        });
+
+        if (res.ok) {
+          showToast("✅ Product added!");
+          e.target.reset();
+          loadProducts();
+          loadStats();
+        } else {
+          showToast("❌ Failed to add product");
+        }
+      } catch (err) {
+        console.error("❌ Error adding product:", err);
+        showToast("❌ Network error");
+      }
+    });
+
+    // Load orders
+    async function loadOrders() {
+      const res = await fetch("http://localhost:5005/orders");
+      const orders = await res.json();
+      const container = document.getElementById("admin-orders");
+      container.innerHTML = orders.map(o => `
+        <div class="card order-list">
+          <strong>${o.customerName}</strong> (${o.customerPhone})<br/>
+          <em>Status:</em> ${o.status}
+          <div class="status-control">
+            <label>Update status:</label>
+            <select onchange="updateOrderStatus('${o._id}', this.value)">
+              <option value="">--Change--</option>
+              <option value="Pending">Pending</option>
+              <option value="Shipped">Shipped</option>
+              <option value="Delivered">Delivered</option>
+            </select>
+          </div>
+          <ul>
+            ${o.cart.map(i => `<li>${i.name} x ${i.qty} — ₦${(i.price * i.qty).toLocaleString()}</li>`).join("")}
+          </ul>
+        </div>
+      `).join("");
+    }
+
+    async function updateOrderStatus(id, status) {
+      if (!status) return;
+      await fetch(`http://localhost:5005/orders/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status })
+      });
+      showToast(`✅ Order marked as ${status}`);
+      loadOrders();
+    }
+    // Initialize
+     window.addEventListener("DOMContentLoaded", () => {
+      loadStats();
+      loadProducts();
+      loadOrders();
+    });
   </script>
+
 </body>
 </html>
